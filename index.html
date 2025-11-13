@@ -36,9 +36,11 @@
   <p id="confirmation">✅ Ton lien a été ajouté ! Le prochain utilisateur te suivra.</p>
 </div>
 
+<!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js"></script>
 <script>
+  // ⚠️ Infos Firebase de ton projet
   const firebaseConfig = {
     apiKey: "AIzaSyBwbRXdJ1NfuX8-3Ja5lh1gEflSrM0BlP8",
     authDomain: "follow-tiktok.firebaseapp.com",
@@ -57,24 +59,31 @@
   const currentLinkElement = document.getElementById("tiktokLink");
   const confirmation = document.getElementById("confirmation");
 
+  // Fonction pour afficher le lien actuel
+  function displayCurrentLink(link) {
+    currentLinkElement.href = link;
+    currentLinkElement.textContent = link;
+  }
+
+  // Vérifier si tiktokLinks existe, sinon créer avec le lien par défaut
   linksRef.once("value").then(snapshot => {
     let data = snapshot.val();
     if (!data || !Array.isArray(data) || data.length === 0) {
       data = [defaultLink];
       linksRef.set(data);
     }
-    currentLinkElement.href = data[0];
-    currentLinkElement.textContent = data[0];
+    displayCurrentLink(data[0]);
   });
 
+  // Écouter les mises à jour en temps réel
   linksRef.on("value", snapshot => {
     const data = snapshot.val();
     if (data && Array.isArray(data) && data.length > 0) {
-      currentLinkElement.href = data[0];
-      currentLinkElement.textContent = data[0];
+      displayCurrentLink(data[0]);
     }
   });
 
+  // Ajouter un nouveau lien TikTok
   document.getElementById("submitLink").addEventListener("submit", async e => {
     e.preventDefault();
     const newLink = document.getElementById("userLink").value.trim();
@@ -82,11 +91,16 @@
       alert("❌ Merci d’entrer un lien TikTok valide !");
       return;
     }
+
     const snapshot = await linksRef.get();
     let data = snapshot.val() || [];
+
+    // Rotation : premier lien à la fin
     if (data.length > 0) data.push(data.shift());
     data.push(newLink);
+
     await linksRef.set(data);
+
     confirmation.style.display = "block";
     document.getElementById("userLink").value = "";
   });
