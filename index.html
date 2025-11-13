@@ -40,7 +40,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js"></script>
 <script>
-  // ⚠️ Infos Firebase de ton projet
+  // ⚠️ Remplace avec les infos de ton projet Firebase
   const firebaseConfig = {
     apiKey: "AIzaSyBwbRXdJ1NfuX8-3Ja5lh1gEflSrM0BlP8",
     authDomain: "follow-tiktok.firebaseapp.com",
@@ -65,7 +65,7 @@
     currentLinkElement.textContent = link;
   }
 
-  // Vérifier si tiktokLinks existe, sinon créer avec le lien par défaut
+  // Vérifie si tiktokLinks existe, sinon crée-le avec le lien par défaut
   linksRef.once("value").then(snapshot => {
     let data = snapshot.val();
     if (!data || !Array.isArray(data) || data.length === 0) {
@@ -73,9 +73,13 @@
       linksRef.set(data);
     }
     displayCurrentLink(data[0]);
+  }).catch(err => {
+    // Si Firebase n'est pas accessible, afficher le lien par défaut
+    displayCurrentLink(defaultLink);
+    console.error("Erreur Firebase:", err);
   });
 
-  // Écouter les mises à jour en temps réel
+  // Écoute les mises à jour en temps réel
   linksRef.on("value", snapshot => {
     const data = snapshot.val();
     if (data && Array.isArray(data) && data.length > 0) {
@@ -92,17 +96,22 @@
       return;
     }
 
-    const snapshot = await linksRef.get();
-    let data = snapshot.val() || [];
+    try {
+      const snapshot = await linksRef.get();
+      let data = snapshot.val() || [];
 
-    // Rotation : premier lien à la fin
-    if (data.length > 0) data.push(data.shift());
-    data.push(newLink);
+      // Rotation : premier lien à la fin
+      if (data.length > 0) data.push(data.shift());
+      data.push(newLink);
 
-    await linksRef.set(data);
+      await linksRef.set(data);
 
-    confirmation.style.display = "block";
-    document.getElementById("userLink").value = "";
+      confirmation.style.display = "block";
+      document.getElementById("userLink").value = "";
+    } catch (err) {
+      alert("❌ Impossible d’ajouter ton lien pour le moment.");
+      console.error(err);
+    }
   });
 </script>
 
