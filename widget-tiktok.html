@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Échange de follow TikTok</title>
+<style>
+  body { font-family: sans-serif; margin:0; padding:0; display:flex; justify-content:center; }
+  #followApp { max-width:600px; width:100%; text-align:center; background:#fff; border-radius:12px; padding:20px; box-shadow:0 0 10px rgba(0,0,0,0.1); box-sizing:border-box; margin:20px; }
+  #currentLink { background:#f9f9f9; padding:15px; border-radius:10px; margin:15px 0; }
+  input { padding:8px; width:90%; border:1px solid #ccc; border-radius:6px; margin-top:8px; box-sizing:border-box; }
+  button { background:#2563eb; color:white; border:none; padding:10px 20px; border-radius:6px; cursor:pointer; }
+  #confirmation { color:green; font-weight:bold; display:none; margin-top:10px; }
+</style>
+</head>
+<body>
+
+<div id="followApp">
+  <h2>💫 Échange de follow TikTok</h2>
+  <p>
+    1️⃣ Connecte-toi à ton compte TikTok<br>
+    2️⃣ Suis le compte affiché ci-dessous<br>
+    3️⃣ Ajoute ton propre lien TikTok pour que le prochain utilisateur te suive à son tour !
+  </p>
+
+  <div id="currentLink">
+    <h3>Compte à suivre :</h3>
+    <a id="tiktokLink" href="#" target="_blank">Chargement...</a>
+  </div>
+
+  <form id="submitLink">
+    <label for="userLink"><b>Ton lien TikTok :</b></label><br>
+    <input id="userLink" type="url" placeholder="https://www.tiktok.com/@tonpseudo" required><br><br>
+    <button type="submit">Ajouter mon lien</button>
+  </form>
+
+  <p id="confirmation">✅ Ton lien a été ajouté ! Le prochain utilisateur te suivra.</p>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBwbRXdJ1NfuX8-3Ja5lh1gEflSrM0BlP8",
+    authDomain: "follow-tiktok.firebaseapp.com",
+    databaseURL: "https://follow-tiktok-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "follow-tiktok",
+    storageBucket: "follow-tiktok.firebasestorage.app",
+    messagingSenderId: "493062722820",
+    appId: "1:493062722820:web:d5c7de80f7d703fda72c51"
+  };
+
+  const app = firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  const linksRef = db.ref("tiktokLinks");
+
+  const defaultLink = "https://www.tiktok.com/@genie.artificiel.ia";
+  const currentLinkElement = document.getElementById("tiktokLink");
+  const confirmation = document.getElementById("confirmation");
+
+  linksRef.once("value").then(snapshot => {
+    let data = snapshot.val();
+    if (!data || !Array.isArray(data) || data.length === 0) {
+      data = [defaultLink];
+      linksRef.set(data);
+    }
+    currentLinkElement.href = data[0];
+    currentLinkElement.textContent = data[0];
+  });
+
+  linksRef.on("value", snapshot => {
+    const data = snapshot.val();
+    if (data && Array.isArray(data) && data.length > 0) {
+      currentLinkElement.href = data[0];
+      currentLinkElement.textContent = data[0];
+    }
+  });
+
+  document.getElementById("submitLink").addEventListener("submit", async e => {
+    e.preventDefault();
+    const newLink = document.getElementById("userLink").value.trim();
+    if (!newLink.startsWith("https://www.tiktok.com/@")) {
+      alert("❌ Merci d’entrer un lien TikTok valide !");
+      return;
+    }
+    const snapshot = await linksRef.get();
+    let data = snapshot.val() || [];
+    if (data.length > 0) data.push(data.shift());
+    data.push(newLink);
+    await linksRef.set(data);
+    confirmation.style.display = "block";
+    document.getElementById("userLink").value = "";
+  });
+</script>
+
+</body>
+</html>
